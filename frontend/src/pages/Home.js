@@ -34,8 +34,7 @@ const Home = () => {
             <span className="hero-highlight"> AI-Powered Learning</span>
           </h1>
           <p className="hero-subtitle">
-            MindSpark adapts to your pace and style, delivering personalized lessons,
-            smart quizzes, and instant doubt resolution — all in one place.
+            MindSpark is your intelligent learning companion that transforms complex topics into easy-to-understand lessons. Get AI-generated content, interactive flashcards, instant doubt resolution, and personalized quizzes tailored to your learning pace and style.
           </p>
           <div className="hero-buttons">
             <button onClick={handleStartLearning} className="btn btn-primary btn-large">
