@@ -3,9 +3,14 @@ import axios from 'axios';
 // Use environment variable for API URL in production, fallback to /api for development
 const API_BASE = process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api` : '/api';
 
+// Create axios instance with base URL
+export const api = axios.create({
+  baseURL: API_BASE
+});
+
 // Topics
 export const generateTopic = async (title, level) => {
-  const { data } = await axios.post(`${API_BASE}/topics/generate`, {
+  const { data } = await api.post('/topics/generate', {
     title,
     level
   });
@@ -13,23 +18,23 @@ export const generateTopic = async (title, level) => {
 };
 
 export const getTopics = async () => {
-  const { data } = await axios.get(`${API_BASE}/topics`);
+  const { data } = await api.get('/topics');
   return data;
 };
 
 export const getTopicById = async (id) => {
-  const { data } = await axios.get(`${API_BASE}/topics/${id}`);
+  const { data } = await api.get(`/topics/${id}`);
   return data;
 };
 
 export const deleteTopic = async (id) => {
-  const { data } = await axios.delete(`${API_BASE}/topics/${id}`);
+  const { data } = await api.delete(`/topics/${id}`);
   return data;
 };
 
 // Doubts
 export const askDoubt = async (topicId, question) => {
-  const { data } = await axios.post(`${API_BASE}/doubts/ask`, {
+  const { data } = await api.post('/doubts/ask', {
     topicId,
     question
   });
@@ -37,18 +42,18 @@ export const askDoubt = async (topicId, question) => {
 };
 
 export const getDoubtsByTopic = async (topicId) => {
-  const { data } = await axios.get(`${API_BASE}/doubts/${topicId}`);
+  const { data } = await api.get(`/doubts/${topicId}`);
   return data;
 };
 
 // Flashcards
 export const getFlashcards = async (topicId) => {
-  const { data } = await axios.get(`${API_BASE}/flashcards/${topicId}`);
+  const { data } = await api.get(`/flashcards/${topicId}`);
   return data;
 };
 
 export const updateFlashcard = async (id, status) => {
-  const { data } = await axios.put(`${API_BASE}/flashcards/${id}`, {
+  const { data } = await api.put(`/flashcards/${id}`, {
     status
   });
   return data;
@@ -56,13 +61,13 @@ export const updateFlashcard = async (id, status) => {
 
 // Text-to-Speech
 export const textToSpeech = async (text) => {
-  const { data } = await axios.post(`${API_BASE}/tts`, { text });
+  const { data } = await api.post('/tts', { text });
   return data;
 };
 
 // Learning Boost Features
 export const explainSimply = async (text, topicTitle) => {
-  const { data } = await axios.post(`${API_BASE}/topics/explain-simply`, {
+  const { data } = await api.post('/topics/explain-simply', {
     text,
     topicTitle
   });
@@ -70,7 +75,7 @@ export const explainSimply = async (text, topicTitle) => {
 };
 
 export const explainWithExample = async (text, topicTitle) => {
-  const { data } = await axios.post(`${API_BASE}/topics/explain-example`, {
+  const { data } = await api.post('/topics/explain-example', {
     text,
     topicTitle
   });
@@ -78,7 +83,7 @@ export const explainWithExample = async (text, topicTitle) => {
 };
 
 export const explainInLanguage = async (text, language, topicTitle) => {
-  const { data} = await axios.post(`${API_BASE}/topics/explain-language`, {
+  const { data} = await api.post('/topics/explain-language', {
     text,
     language,
     topicTitle
@@ -87,17 +92,17 @@ export const explainInLanguage = async (text, language, topicTitle) => {
 };
 
 export const generateKeyPoints = async (topicId) => {
-  const { data } = await axios.post(`${API_BASE}/topics/${topicId}/key-points`);
+  const { data } = await api.post(`/topics/${topicId}/key-points`);
   return data;
 };
 
 export const extractKeywords = async (topicId) => {
-  const { data } = await axios.post(`${API_BASE}/topics/${topicId}/keywords`);
+  const { data } = await api.post(`/topics/${topicId}/keywords`);
   return data;
 };
 
 export const askAboutText = async (text, question, topicTitle) => {
-  const { data } = await axios.post(`${API_BASE}/topics/ask-about-text`, {
+  const { data } = await api.post('/topics/ask-about-text', {
     text,
     question,
     topicTitle
@@ -106,32 +111,32 @@ export const askAboutText = async (text, question, topicTitle) => {
 };
 
 export const generateTopicQA = async (topicId) => {
-  const { data } = await axios.post(`${API_BASE}/topics/${topicId}/generate-qa`);
+  const { data } = await api.post(`/topics/${topicId}/generate-qa`);
   return data;
 };
 
 export const toggleBookmark = async (topicId) => {
-  const { data } = await axios.put(`${API_BASE}/topics/${topicId}/bookmark`);
+  const { data } = await api.put(`/topics/${topicId}/bookmark`);
   return data;
 };
 
 export const updateNotes = async (topicId, notes) => {
-  const { data } = await axios.put(`${API_BASE}/topics/${topicId}/notes`, { notes });
+  const { data } = await api.put(`/topics/${topicId}/notes`, { notes });
   return data;
 };
 
 export const updateProgress = async (topicId, status) => {
-  const { data } = await axios.put(`${API_BASE}/topics/${topicId}/progress`, { status });
+  const { data } = await api.put(`/topics/${topicId}/progress`, { status });
   return data;
 };
 
 // Quotes
 export const getDailyQuote = async () => {
-  const { data } = await axios.get(`${API_BASE}/quotes/daily`);
+  const { data } = await api.get('/quotes/daily');
   return data;
 };
 
 export const getRandomQuote = async () => {
-  const { data } = await axios.get(`${API_BASE}/quotes/random`);
+  const { data } = await api.get('/quotes/random');
   return data;
 };
