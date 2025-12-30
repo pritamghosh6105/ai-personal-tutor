@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         setAuthToken(token);
         try {
-          const { data } = await api.get('/api/auth/me');
+          const { data } = await api.get('/auth/me');
           setUser(data);
         } catch (error) {
           console.error('Failed to load user:', error);
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
 
   // Signup
   const signup = async (name, email, password) => {
-    const { data } = await api.post('/api/auth/signup', {
+    const { data } = await api.post('/auth/signup', {
       name,
       email,
       password
@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     console.log('🔐 Attempting login with:', email);
     try {
-      const { data } = await api.post('/api/auth/login', {
+      const { data } = await api.post('/auth/login', {
         email,
         password
       });
