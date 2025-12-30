@@ -48,14 +48,20 @@ export const AuthProvider = ({ children }) => {
 
   // Signup
   const signup = async (name, email, password) => {
-    const { data } = await api.post('/auth/signup', {
-      name,
-      email,
-      password
-    });
-    setUser(data);
-    setAuthToken(data.token);
-    return data;
+    try {
+      const { data } = await api.post('/auth/signup', {
+        name,
+        email,
+        password
+      });
+      console.log('✅ Signup successful:', data.name);
+      setUser(data);
+      setAuthToken(data.token);
+      return data;
+    } catch (error) {
+      console.error('❌ Signup failed:', error.response?.data?.message || error.message);
+      throw error;
+    }
   };
 
   // Login
