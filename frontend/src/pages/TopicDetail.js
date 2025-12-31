@@ -911,23 +911,6 @@ const TopicDetail = () => {
                     </div>
                   )}
                 </div>
-                
-                <div className="reading-controls-right">
-                  <div className="control-group">
-                    <span className="control-label">Volume:</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.1"
-                      value={readingVolume}
-                      onChange={(e) => changeVolume(parseFloat(e.target.value))}
-                      className="volume-slider"
-                      title={`Volume: ${Math.round(readingVolume * 100)}%`}
-                    />
-                    <span className="volume-value">{Math.round(readingVolume * 100)}%</span>
-                  </div>
-                </div>
               </div>
 
               {/* Lesson Content */}
