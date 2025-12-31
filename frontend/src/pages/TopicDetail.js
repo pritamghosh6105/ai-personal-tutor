@@ -445,18 +445,16 @@ const TopicDetail = () => {
 
   // Learning Boost Functions
   const handleTextSelection = (event) => {
-    // Use requestAnimationFrame for better performance and no perceived delay
-    requestAnimationFrame(() => {
-      const selection = window.getSelection().toString().trim();
-      console.log('📝 Text selected:', selection);
-      if (selection && selection.length > 3) {
-        setSelectedText(selection);
-        setShowExplanation(false); // Reset explanation when new text is selected
-        console.log('✅ Selection saved, length:', selection.length);
-      } else if (selection) {
-        console.log('⚠️ Selection too short (less than 4 characters)');
-      }
-    });
+    // Capture selection immediately for instant feedback
+    const selection = window.getSelection().toString().trim();
+    console.log('📝 Text selected:', selection);
+    if (selection && selection.length > 3) {
+      setSelectedText(selection);
+      setShowExplanation(false); // Reset explanation when new text is selected
+      console.log('✅ Selection saved, length:', selection.length);
+    } else if (selection) {
+      console.log('⚠️ Selection too short (less than 4 characters)');
+    }
   };
 
   const handleExplainSimply = async (e) => {
