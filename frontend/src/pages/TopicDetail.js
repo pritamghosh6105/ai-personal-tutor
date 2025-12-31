@@ -445,9 +445,8 @@ const TopicDetail = () => {
 
   // Learning Boost Functions
   const handleTextSelection = (event) => {
-    // Use setTimeout to ensure selection is captured after the event completes
-    // This is especially important for mobile browsers
-    setTimeout(() => {
+    // Use requestAnimationFrame for better performance and no perceived delay
+    requestAnimationFrame(() => {
       const selection = window.getSelection().toString().trim();
       console.log('📝 Text selected:', selection);
       if (selection && selection.length > 3) {
@@ -457,7 +456,7 @@ const TopicDetail = () => {
       } else if (selection) {
         console.log('⚠️ Selection too short (less than 4 characters)');
       }
-    }, 50); // Small delay to capture selection properly on mobile
+    });
   };
 
   const handleExplainSimply = async (e) => {
