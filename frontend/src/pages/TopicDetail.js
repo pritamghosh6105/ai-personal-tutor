@@ -444,19 +444,12 @@ const TopicDetail = () => {
   };
 
   // Learning Boost Functions
-  const handleTextSelection = (event) => {
-    // Very minimal delay (10ms) for Android selection to complete, feels instant
-    setTimeout(() => {
-      const selection = window.getSelection().toString().trim();
-      console.log('📝 Text selected:', selection);
-      if (selection && selection.length > 3) {
-        setSelectedText(selection);
-        setShowExplanation(false); // Reset explanation when new text is selected
-        console.log('✅ Selection saved, length:', selection.length);
-      } else if (selection) {
-        console.log('⚠️ Selection too short (less than 4 characters)');
-      }
-    }, 10);
+  const handleTextSelection = () => {
+    const selection = window.getSelection().toString().trim();
+    if (selection && selection.length > 3) {
+      setSelectedText(selection);
+      setShowExplanation(false);
+    }
   };
 
   const handleExplainSimply = async (e) => {
