@@ -61,8 +61,11 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log('🔐 Login attempt for:', email);
+
     // Validation
     if (!email || !password) {
+      console.log('❌ Missing email or password');
       return res.status(400).json({ message: 'Please provide email and password' });
     }
 
@@ -70,15 +73,21 @@ const login = async (req, res) => {
     const user = await User.findOne({ email }).select('+password');
     
     if (!user) {
+      console.log('❌ User not found:', email);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
+
+    console.log('✅ User found:', user.email);
 
     // Check password
     const isMatch = await user.matchPassword(password);
     
     if (!isMatch) {
+      console.log('❌ Password mismatch for:', email);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
+
+    console.log('✅ Login successful for:', user.name);
 
     res.json({
       _id: user._id,
@@ -88,7 +97,7 @@ const login = async (req, res) => {
       token: generateToken(user._id)
     });
   } catch (error) {
-    console.error(error);
+    console.error('❌ Login error:', error);
     res.status(500).json({ message: 'Server error during login' });
   }
 };

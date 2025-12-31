@@ -444,22 +444,42 @@ const TopicDetail = () => {
   };
 
   // Learning Boost Functions
-  const handleTextSelection = () => {
-    const selection = window.getSelection().toString().trim();
-    console.log('📝 Text selected:', selection);
-    if (selection && selection.length > 3) {
-      setSelectedText(selection);
-      setShowExplanation(false); // Reset explanation when new text is selected
-      console.log('✅ Selection saved, length:', selection.length);
-    } else if (selection) {
-      console.log('⚠️ Selection too short (less than 4 characters)');
-    }
+  const handleTextSelection = (event) => {
+    // Use setTimeout to ensure selection is captured after the event completes
+    // This is especially important for mobile browsers
+    setTimeout(() => {
+      const selection = window.getSelection().toString().trim();
+      console.log('📝 Text selected:', selection);
+      if (selection && selection.length > 3) {
+        setSelectedText(selection);
+        setShowExplanation(false); // Reset explanation when new text is selected
+        console.log('✅ Selection saved, length:', selection.length);
+      } else if (selection) {
+        console.log('⚠️ Selection too short (less than 4 characters)');
+      }
+    }, 50); // Small delay to capture selection properly on mobile
   };
 
-  const handleExplainSimply = async () => {
-    console.log('🔍 Explain Simply clicked, selectedText:', selectedText);
+  const handleExplainSimply = async (e) => {
+    // Prevent default behavior to avoid clearing selection on mobile
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     
-    if (!selectedText) {
+    // Try to get current selection if selectedText is empty (fallback)
+    let textToExplain = selectedText;
+    if (!textToExplain) {
+      const currentSelection = window.getSelection().toString().trim();
+      if (currentSelection && currentSelection.length > 3) {
+        textToExplain = currentSelection;
+        setSelectedText(currentSelection);
+      }
+    }
+    
+    console.log('🔍 Explain Simply clicked, selectedText:', textToExplain);
+    
+    if (!textToExplain) {
       alert('Please select some text first by highlighting it!');
       return;
     }
@@ -469,8 +489,8 @@ const TopicDetail = () => {
     setShowExplanation(true);
     
     try {
-      console.log('📤 Sending request with text:', selectedText);
-      const result = await explainSimply(selectedText, topic?.title || 'Topic');
+      console.log('📤 Sending request with text:', textToExplain);
+      const result = await explainSimply(textToExplain, topic?.title || 'Topic');
       console.log('✅ Received response:', result);
       setExplanationText(result.explanation);
     } catch (error) {
@@ -482,8 +502,24 @@ const TopicDetail = () => {
     }
   };
 
-  const handleExplainWithExample = async () => {
-    if (!selectedText) {
+  const handleExplainWithExample = async (e) => {
+    // Prevent default behavior to avoid clearing selection on mobile
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    // Try to get current selection if selectedText is empty (fallback)
+    let textToExplain = selectedText;
+    if (!textToExplain) {
+      const currentSelection = window.getSelection().toString().trim();
+      if (currentSelection && currentSelection.length > 3) {
+        textToExplain = currentSelection;
+        setSelectedText(currentSelection);
+      }
+    }
+    
+    if (!textToExplain) {
       alert('Please select some text first by highlighting it!');
       return;
     }
@@ -493,7 +529,7 @@ const TopicDetail = () => {
     setShowExplanation(true);
     
     try {
-      const { explanation } = await explainWithExample(selectedText, topic.title);
+      const { explanation } = await explainWithExample(textToExplain, topic.title);
       setExplanationText(explanation);
     } catch (error) {
       console.error('Error:', error);
@@ -503,8 +539,24 @@ const TopicDetail = () => {
     }
   };
 
-  const handleExplainInLanguage = async (language) => {
-    if (!selectedText) {
+  const handleExplainInLanguage = async (language, e) => {
+    // Prevent default behavior to avoid clearing selection on mobile
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    // Try to get current selection if selectedText is empty (fallback)
+    let textToExplain = selectedText;
+    if (!textToExplain) {
+      const currentSelection = window.getSelection().toString().trim();
+      if (currentSelection && currentSelection.length > 3) {
+        textToExplain = currentSelection;
+        setSelectedText(currentSelection);
+      }
+    }
+    
+    if (!textToExplain) {
       alert('Please select some text first by highlighting it!');
       return;
     }
@@ -514,7 +566,7 @@ const TopicDetail = () => {
     setShowExplanation(true);
     
     try {
-      const { explanation } = await explainInLanguage(selectedText, language, topic.title);
+      const { explanation } = await explainInLanguage(textToExplain, language, topic.title);
       setExplanationText(explanation);
     } catch (error) {
       console.error('Error:', error);
@@ -551,8 +603,24 @@ const TopicDetail = () => {
   };
 
   // Ask AI Q&A Handler
-  const handleAskAI = () => {
-    if (!selectedText) {
+  const handleAskAI = (e) => {
+    // Prevent default behavior to avoid clearing selection on mobile
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    // Try to get current selection if selectedText is empty (fallback)
+    let textToAsk = selectedText;
+    if (!textToAsk) {
+      const currentSelection = window.getSelection().toString().trim();
+      if (currentSelection && currentSelection.length > 3) {
+        textToAsk = currentSelection;
+        setSelectedText(currentSelection);
+      }
+    }
+    
+    if (!textToAsk) {
       alert('Please select some text first by highlighting it!');
       return;
     }
@@ -700,15 +768,39 @@ const TopicDetail = () => {
               <div className="learning-boost-toolbar">
                 <div className="boost-section">
                   <span className="boost-label">📝 Select text, then:</span>
-                  <button className="btn-boost" onClick={handleExplainSimply} title="Simpler explanation">
+                  {selectedText && (
+                    <div className="text-selection-indicator">
+                      <span className="selection-icon"></span>
+                      <span>{selectedText.length} chars selected</span>
+                    </div>
+                  )}
+                  <button 
+                    className="btn-boost" 
+                    onMouseDown={(e) => e.preventDefault()} 
+                    onClick={handleExplainSimply} 
+                    onTouchStart={(e) => e.preventDefault()}
+                    title="Simpler explanation"
+                  >
                     <Lightbulb size={16} />
                     Explain Simply
                   </button>
-                  <button className="btn-boost" onClick={handleExplainWithExample} title="Real-world example">
+                  <button 
+                    className="btn-boost" 
+                    onMouseDown={(e) => e.preventDefault()} 
+                    onClick={handleExplainWithExample} 
+                    onTouchStart={(e) => e.preventDefault()}
+                    title="Real-world example"
+                  >
                     <BookA size={16} />
                     With Example
                   </button>
-                  <button className="btn-boost" onClick={handleAskAI} title="Ask a question about this text">
+                  <button 
+                    className="btn-boost" 
+                    onMouseDown={(e) => e.preventDefault()} 
+                    onClick={handleAskAI} 
+                    onTouchStart={(e) => e.preventDefault()}
+                    title="Ask a question about this text"
+                  >
                     <MessageCircle size={16} />
                     Ask AI
                   </button>
@@ -716,10 +808,20 @@ const TopicDetail = () => {
 
                 <div className="boost-section">
                   <span className="boost-label">🌏 Language:</span>
-                  <button className="btn-boost-lang" onClick={() => handleExplainInLanguage('hindi')}>
+                  <button 
+                    className="btn-boost-lang" 
+                    onMouseDown={(e) => e.preventDefault()} 
+                    onClick={(e) => handleExplainInLanguage('hindi', e)}
+                    onTouchStart={(e) => e.preventDefault()}
+                  >
                     हिंदी
                   </button>
-                  <button className="btn-boost-lang" onClick={() => handleExplainInLanguage('hinglish')}>
+                  <button 
+                    className="btn-boost-lang" 
+                    onMouseDown={(e) => e.preventDefault()} 
+                    onClick={(e) => handleExplainInLanguage('hinglish', e)}
+                    onTouchStart={(e) => e.preventDefault()}
+                  >
                     Hinglish
                   </button>
                 </div>
@@ -829,7 +931,11 @@ const TopicDetail = () => {
               </div>
 
               {/* Lesson Content */}
-              <div className="lesson-card" onMouseUp={handleTextSelection}>
+              <div 
+                className="lesson-card" 
+                onMouseUp={handleTextSelection}
+                onTouchEnd={handleTextSelection}
+              >
                 <div className="lesson-section">
                   <h3 className="lesson-section-title">
                     <span className="section-icon">📘</span>
