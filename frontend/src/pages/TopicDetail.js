@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import { BookOpen, HelpCircle, CreditCard, CheckCircle, XCircle, Play, Pause, Square, Lightbulb, BookA, Key, FileText, MessageCircle, Bookmark, StickyNote, ThumbsUp, Clock } from 'lucide-react';
-import { getTopicById, askDoubt, getDoubtsByTopic, updateFlashcard, textToSpeech, explainSimply, explainWithExample, explainInLanguage, generateKeyPoints, extractKeywords, askAboutText, toggleBookmark, updateNotes, updateProgress, generateTopicQA } from '../services/api';
+import { BookOpen, HelpCircle, CreditCard, CheckCircle, XCircle, Play, Pause, Square, Lightbulb, BookA, Key, FileText, MessageCircle, Bookmark, StickyNote, ThumbsUp, Clock, Youtube, Book } from 'lucide-react';
+import { getTopicById, askDoubt, getDoubtsByTopic, updateFlashcard, textToSpeech, explainSimply, explainWithExample, explainInLanguage, generateKeyPoints, extractKeywords, askAboutText, toggleBookmark, updateNotes, updateProgress, generateTopicQA, searchYouTubeVideos, searchBooks } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import './TopicDetail.css';
 
@@ -73,10 +73,92 @@ const TopicDetail = () => {
   const [savingNotes, setSavingNotes] = useState(false);
   const [progressStatus, setProgressStatus] = useState('not-started');
 
+  // YouTube videos state
+  const [youtubeVideos, setYoutubeVideos] = useState([]);
+  const [loadingVideos, setLoadingVideos] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [videoSearchQuery, setVideoSearchQuery] = useState('');
+
+  // Books state
+  const [books, setBooks] = useState([]);
+  const [loadingBooks, setLoadingBooks] = useState(false);
+  const [bookSearchQuery, setBookSearchQuery] = useState('');
+  const [selectedBook, setSelectedBook] = useState(null);
+
   useEffect(() => {
     fetchTopicData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    // Fetch YouTube videos when videos tab is active
+    if (activeTab === 'videos' && topic && youtubeVideos.length === 0) {
+      fetchYouTubeVideos();
+    }
+    // Fetch books when books tab is active
+    if (activeTab === 'books' && topic && books.length === 0) {
+      fetchBooks();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, topic]);
+
+  const fetchYouTubeVideos = async (customQuery = null) => {
+    if (!topic && !customQuery) return;
+    
+    const searchQuery = customQuery || topic?.title || '';
+    if (!searchQuery) return;
+    
+    setLoadingVideos(true);
+    try {
+      const response = await searchYouTubeVideos(searchQuery, 10);
+      setYoutubeVideos(response.videos || []);
+    } catch (error) {
+      console.error('Error fetching YouTube videos:', error);
+      setYoutubeVideos([]);
+    } finally {
+      setLoadingVideos(false);
+    }
+  };
+
+  const handleVideoSearch = (e) => {
+    e.preventDefault();
+    if (videoSearchQuery.trim()) {
+      fetchYouTubeVideos(videoSearchQuery.trim());
+    }
+  };
+
+  const fetchBooks = async (customQuery = null) => {
+    if (!topic && !customQuery) return;
+    
+    const searchQuery = customQuery || topic?.title || '';
+    if (!searchQuery) return;
+    
+    setLoadingBooks(true);
+    try {
+      const response = await searchBooks(searchQuery, 10);
+      setBooks(response.books || []);
+    } catch (error) {
+      console.error('Error fetching books:', error);
+      setBooks([]);
+    } finally {
+      setLoadingBooks(false);
+    }
+  };
+
+  const handleBookSearch = (e) => {
+    e.preventDefault();
+    if (bookSearchQuery.trim()) {
+      fetchBooks(bookSearchQuery.trim());
+    }
+  };
+
+  const openBookPreview = (book) => {
+    setSelectedBook(book);
+  };
+
+  const closeBookPreview = () => {
+    setSelectedBook(null);
+  };
 
   const fetchTopicData = async () => {
     try {
@@ -751,6 +833,20 @@ const TopicDetail = () => {
             <HelpCircle size={20} />
             Doubts
           </button>
+          <button
+            className={`tab ${activeTab === 'videos' ? 'active' : ''}`}
+            onClick={() => setActiveTab('videos')}
+          >
+            <Youtube size={20} />
+            Videos
+          </button>
+          <button
+            className={`tab ${activeTab === 'books' ? 'active' : ''}`}
+            onClick={() => setActiveTab('books')}
+          >
+            <Book size={20} />
+            Books
+          </button>
         </div>
 
         <div className="tab-content">
@@ -1175,81 +1271,366 @@ const TopicDetail = () => {
 
           {activeTab === 'doubts' && (
             <div className="doubts-content">
-              <div className="ask-question-card">
-                <div className="ask-question-header">
-                  <h3>Ask AI Tutor</h3>
-                  <span className="ai-badge">✨ AI-Powered</span>
-                </div>
-                <p className="ask-description">
-                  Ask anything about this topic! Our AI tutor will provide personalized explanations.
-                </p>
-                <form onSubmit={handleAskDoubt}>
-                  <textarea
-                    className="doubt-input"
-                    rows="4"
-                    placeholder="Example: Can you explain this concept using a real-world example? 🚀"
-                    value={doubtQuestion}
-                    onChange={(e) => setDoubtQuestion(e.target.value)}
-                    disabled={askingDoubt}
-                  />
-                  <button
-                    type="submit"
-                    className="btn-ask-question"
-                    disabled={askingDoubt || !doubtQuestion.trim()}
-                  >
-                    {askingDoubt ? (
-                      <>
-                        <span className="asking-spinner"></span>
-                        AI is thinking...
-                      </>
+                  <div className="ask-question-card">
+                    <div className="ask-question-header">
+                      <h3>Ask AI Tutor</h3>
+                      <span className="ai-badge">✨ AI-Powered</span>
+                    </div>
+                    <p className="ask-description">
+                      Ask anything about this topic! Our AI tutor will provide personalized explanations.
+                    </p>
+                    <form onSubmit={handleAskDoubt}>
+                      <textarea
+                        className="doubt-input"
+                        rows="4"
+                        placeholder="Example: Can you explain this concept using a real-world example? 🚀"
+                        value={doubtQuestion}
+                        onChange={(e) => setDoubtQuestion(e.target.value)}
+                        disabled={askingDoubt}
+                      />
+                      <button
+                        type="submit"
+                        className="btn-ask-question"
+                        disabled={askingDoubt || !doubtQuestion.trim()}
+                      >
+                        {askingDoubt ? (
+                          <>
+                            <span className="asking-spinner"></span>
+                            AI is thinking...
+                          </>
+                        ) : (
+                          <>
+                            <HelpCircle size={20} />
+                            Ask AI Tutor
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  </div>
+
+                  <div className="doubts-list">
+                    <h4 className="doubts-list-title">📚 Previous Questions & Answers</h4>
+                    {doubts.length > 0 ? (
+                      doubts.map((doubt, index) => (
+                        <div key={doubt._id} className="doubt-card" style={{ animationDelay: `${index * 0.1}s` }}>
+                          <div className="doubt-question">
+                            <div className="question-icon">❓</div>
+                            <div className="question-content">
+                              <span className="question-label">Your Question:</span>
+                              <p>{doubt.question}</p>
+                            </div>
+                          </div>
+                          <div className="doubt-answer">
+                            <div className="answer-icon">🤖</div>
+                            <div className="answer-content">
+                              <span className="answer-label">
+                                <span className="ai-tutor-badge">AI Tutor</span>
+                                answered:
+                              </span>
+                              <div className="markdown-answer">
+                                <ReactMarkdown>{doubt.answer}</ReactMarkdown>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="doubt-footer">
+                            <span className="doubt-date">
+                              ⏰ {new Date(doubt.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      ))
                     ) : (
-                      <>
-                        <HelpCircle size={20} />
-                        Ask AI Tutor
-                      </>
+                      <div className="empty-doubts">
+                        <div className="empty-icon">💭</div>
+                        <h4>No questions yet</h4>
+                        <p>Be the first to ask! Our AI tutor is ready to help you understand this topic better.</p>
+                      </div>
                     )}
+                  </div>
+            </div>
+          )}
+
+          {activeTab === 'videos' && (
+            <div className="videos-content">
+              <div className="videos-header-section">
+                <div className="videos-title">
+                  <Youtube size={32} />
+                  <div>
+                    <h2>Video Resources</h2>
+                    <p>Watch curated educational videos related to <strong>{topic?.title}</strong></p>
+                  </div>
+                </div>
+                
+                <form onSubmit={handleVideoSearch} className="video-search-form">
+                  <input
+                    type="text"
+                    className="video-search-input"
+                    placeholder="Search for specific videos..."
+                    value={videoSearchQuery}
+                    onChange={(e) => setVideoSearchQuery(e.target.value)}
+                  />
+                  <button 
+                    type="submit" 
+                    className="video-search-btn"
+                    disabled={!videoSearchQuery.trim() || loadingVideos}
+                  >
+                    <Youtube size={18} />
+                    Search Videos
                   </button>
                 </form>
               </div>
 
-              <div className="doubts-list">
-                <h4 className="doubts-list-title">📚 Previous Questions & Answers</h4>
-                {doubts.length > 0 ? (
-                  doubts.map((doubt, index) => (
-                    <div key={doubt._id} className="doubt-card" style={{ animationDelay: `${index * 0.1}s` }}>
-                      <div className="doubt-question">
-                        <div className="question-icon">❓</div>
-                        <div className="question-content">
-                          <span className="question-label">Your Question:</span>
-                          <p>{doubt.question}</p>
+              {loadingVideos ? (
+                <div className="videos-loading-container">
+                  <div className="spinner-large"></div>
+                  <p>Finding the best videos for you...</p>
+                </div>
+              ) : youtubeVideos.length > 0 ? (
+                <div className="videos-grid">
+                  {youtubeVideos.map((video, index) => (
+                    <div 
+                      key={video.videoId} 
+                      className="video-card-large"
+                      onClick={() => setSelectedVideo(video)}
+                    >
+                      <div className="video-thumbnail-large">
+                        <img src={video.thumbnail} alt={video.title} />
+                        <div className="play-overlay-large">
+                          <Play size={48} fill="white" />
                         </div>
                       </div>
-                      <div className="doubt-answer">
-                        <div className="answer-icon">🤖</div>
-                        <div className="answer-content">
-                          <span className="answer-label">
-                            <span className="ai-tutor-badge">AI Tutor</span>
-                            answered:
-                          </span>
-                          <div className="markdown-answer">
-                            <ReactMarkdown>{doubt.answer}</ReactMarkdown>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="doubt-footer">
-                        <span className="doubt-date">
-                          ⏰ {new Date(doubt.createdAt).toLocaleString()}
-                        </span>
+                      <div className="video-info-large">
+                        <h3 className="video-title-large">{video.title}</h3>
+                        <p className="video-channel-large">{video.channelTitle}</p>
+                        <p className="video-description">{video.description.substring(0, 120)}...</p>
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="empty-doubts">
-                    <div className="empty-icon">💭</div>
-                    <h4>No questions yet</h4>
-                    <p>Be the first to ask! Our AI tutor is ready to help you understand this topic better.</p>
+                  ))}
+                </div>
+              ) : (
+                <div className="videos-empty">
+                  <Youtube size={80} />
+                  <h3>No videos available</h3>
+                  <p>We couldn't find any videos for this topic at the moment.</p>
+                </div>
+              )}
+
+              {/* Video Player Modal */}
+              {selectedVideo && selectedVideo.embedUrl && (
+                <div className="video-player-modal" onClick={() => setSelectedVideo(null)}>
+                  <div className="video-player-content" onClick={(e) => e.stopPropagation()}>
+                    <button className="close-video-btn" onClick={() => setSelectedVideo(null)}>×</button>
+                    <iframe
+                      width="100%"
+                      height="500"
+                      src={selectedVideo.embedUrl}
+                      title={selectedVideo.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                    <div className="video-details">
+                      <h3>{selectedVideo.title}</h3>
+                      <p className="video-channel-name">{selectedVideo.channelTitle}</p>
+                      <a 
+                        href={selectedVideo.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="btn-watch-youtube"
+                      >
+                        <Youtube size={18} />
+                        Watch on YouTube
+                      </a>
+                    </div>
                   </div>
-                )}
+                </div>
+              )}
+              
+              {selectedVideo && !selectedVideo.embedUrl && (
+                <div className="video-player-modal" onClick={() => setSelectedVideo(null)}>
+                  <div className="video-player-content" onClick={(e) => e.stopPropagation()}>
+                    <button className="close-video-btn" onClick={() => setSelectedVideo(null)}>×</button>
+                    <div className="video-unavailable">
+                      <Youtube size={64} />
+                      <h3>Video Preview Not Available</h3>
+                      <p>This video cannot be embedded. Click below to watch on YouTube.</p>
+                      <a 
+                        href={selectedVideo.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="btn-watch-youtube"
+                      >
+                        <Youtube size={18} />
+                        Watch on YouTube
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'books' && (
+            <div className="books-content">
+              <div className="books-header-section">
+                <div className="books-title">
+                  <Book size={32} />
+                  <div>
+                    <h2>Book References</h2>
+                    <p>Discover recommended books about <strong>{topic?.title}</strong></p>
+                  </div>
+                </div>
+                
+                <form onSubmit={handleBookSearch} className="book-search-form">
+                  <input
+                    type="text"
+                    className="book-search-input"
+                    placeholder="Search for specific books..."
+                    value={bookSearchQuery}
+                    onChange={(e) => setBookSearchQuery(e.target.value)}
+                  />
+                  <button 
+                    type="submit" 
+                    className="book-search-btn"
+                    disabled={!bookSearchQuery.trim() || loadingBooks}
+                  >
+                    <Book size={18} />
+                    Search Books
+                  </button>
+                </form>
+              </div>
+
+              {loadingBooks ? (
+                <div className="books-loading-container">
+                  <div className="spinner-large"></div>
+                  <p>Finding the best books for you...</p>
+                </div>
+              ) : books.length > 0 ? (
+                <div className="books-grid">
+                  {books.map((book, index) => (
+                    <div key={book.id} className="book-card">
+                      <div className="book-thumbnail">
+                        {book.thumbnail ? (
+                          <img src={book.thumbnail} alt={book.title} />
+                        ) : (
+                          <div className="book-placeholder">
+                            <Book size={48} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="book-info">
+                        <h3 className="book-title">{book.title}</h3>
+                        <p className="book-authors">{book.authors.join(', ')}</p>
+                        <p className="book-publisher">{book.publisher} • {book.publishedDate}</p>
+                        
+                        {book.averageRating > 0 && (
+                          <div className="book-rating">
+                            <span className="rating-stars">⭐ {book.averageRating.toFixed(1)}</span>
+                            <span className="rating-count">({book.ratingsCount} reviews)</span>
+                          </div>
+                        )}
+                        
+                        <p className="book-description">{book.description.substring(0, 150)}...</p>
+                        
+                        <div className="book-meta">
+                          {book.pageCount > 0 && <span className="book-pages">📄 {book.pageCount} pages</span>}
+                          {book.isEbook && <span className="book-ebook">📱 eBook</span>}
+                          {book.publicDomain && <span className="book-public-domain">🆓 Public Domain</span>}
+                        </div>
+
+                        {/* Format Indicators */}
+                        {book.formats && book.formats.length > 0 && (
+                          <div className="book-formats">
+                            <span className="formats-label">Available Formats:</span>
+                            {book.formats.map((format, idx) => (
+                              <span key={idx} className="format-badge">{format}</span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Download Links */}
+                        {book.downloadLinks && Object.keys(book.downloadLinks).length > 0 && (
+                          <div className="book-downloads">
+                            <span className="downloads-label">📥 Downloads:</span>
+                            {book.downloadLinks.pdfDownload && (
+                              <a 
+                                href={book.downloadLinks.pdfDownload} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="download-link"
+                              >
+                                PDF
+                              </a>
+                            )}
+                            {book.downloadLinks.epubDownload && (
+                              <a 
+                                href={book.downloadLinks.epubDownload} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="download-link"
+                              >
+                                EPUB
+                              </a>
+                            )}
+                          </div>
+                        )}
+                        
+                        <div className="book-actions">
+                          {book.previewLink && (
+                            <button 
+                              onClick={() => openBookPreview(book)}
+                              className="btn-book-preview"
+                            >
+                              👁️ Preview
+                            </button>
+                          )}
+                          {book.buyLink && (
+                            <a 
+                              href={book.buyLink} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="btn-book-buy"
+                            >
+                              🛒 Buy
+                            </a>
+                          )}
+                          {book.infoLink && (
+                            <a 
+                              href={book.infoLink} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="btn-book-info"
+                            >
+                              ℹ️ More Info
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="books-empty">
+                  <Book size={80} />
+                  <h3>No books available</h3>
+                  <p>We couldn't find any books for this topic at the moment.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Book Preview Modal */}
+          {selectedBook && (
+            <div className="book-preview-modal" onClick={closeBookPreview}>
+              <div className="book-preview-content" onClick={(e) => e.stopPropagation()}>
+                <button className="close-book-btn" onClick={closeBookPreview}>×</button>
+                <iframe
+                  src={`https://books.google.com/books?id=${selectedBook.id}&lpg=PP1&pg=PP1&output=embed`}
+                  title={selectedBook.title}
+                  className="book-preview-iframe"
+                  frameBorder="0"
+                  allowFullScreen
+                />
               </div>
             </div>
           )}

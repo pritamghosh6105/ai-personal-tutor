@@ -31,6 +31,8 @@ app.use('/api/doubts', require('./routes/doubtRoutes'));
 app.use('/api/flashcards', require('./routes/flashcardRoutes'));
 app.use('/api/tts', require('./routes/ttsRoutes'));
 app.use('/api/quotes', require('./routes/quoteRoutes'));
+app.use('/api/youtube', require('./routes/youtubeRoutes'));
+app.use('/api/books', require('./routes/booksRoutes'));
 
 // Health check route
 app.get('/api/health', (req, res) => {

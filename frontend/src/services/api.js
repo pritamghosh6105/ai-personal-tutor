@@ -146,3 +146,19 @@ export const getRandomQuote = async () => {
   const { data } = await api.get('/quotes/random');
   return data;
 };
+
+// YouTube Videos
+export const searchYouTubeVideos = async (query, maxResults = 5) => {
+  const { data } = await api.get('/youtube/search', {
+    params: { query, maxResults }
+  });
+  return data;
+};
+
+// Books References
+export const searchBooks = async (query, maxResults = 10) => {
+  const { data } = await api.get('/books/search', {
+    params: { query, maxResults }
+  });
+  return data;
+};
